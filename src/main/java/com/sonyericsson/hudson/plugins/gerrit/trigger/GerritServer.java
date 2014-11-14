@@ -30,6 +30,8 @@ import static com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExcepti
 import static com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExceptionData.Time.MIN_HOUR;
 import static com.sonymobile.tools.gerrit.gerritevents.watchdog.WatchTimeExceptionData.Time.MIN_MINUTE;
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.utils.StringUtil.PLUGIN_IMAGES_URL;
+
+import com.sonyericsson.hudson.plugins.gerrit.trigger.playback.GerritMissedEventsPlaybackManager;
 import hudson.Extension;
 import hudson.Functions;
 import hudson.RelativePath;
@@ -151,6 +153,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
     private transient UnreviewedPatchesListener unreviewedPatchesListener;
     private IGerritHudsonTriggerConfig config;
     private transient GerritConnectionListener gerritConnectionListener;
+    private transient GerritMissedEventsPlaybackManager missedEventsPlaybackManager;
 
     @Override
     public DescriptorImpl getDescriptor() {
@@ -389,6 +392,8 @@ public class GerritServer implements Describable<GerritServer>, Action {
         config.setCategories(categories);
         gerritEventManager = PluginImpl.getInstance().getHandler();
 
+        missedEventsPlaybackManager = new GerritMissedEventsPlaybackManager(name);
+
         initializeConnectionListener();
 
         projectListUpdater = new GerritProjectListUpdater(name);
@@ -396,6 +401,10 @@ public class GerritServer implements Describable<GerritServer>, Action {
 
         //Starts unreviewed patches listener
         unreviewedPatchesListener = new UnreviewedPatchesListener(name);
+
+        if (missedEventsPlaybackManager.isSupported()) {
+            addListener((GerritEventListener)missedEventsPlaybackManager);
+        }
 
         logger.info(name + " started");
         started = true;
@@ -431,6 +440,10 @@ public class GerritServer implements Describable<GerritServer>, Action {
         if (unreviewedPatchesListener != null) {
             unreviewedPatchesListener.shutdown();
             unreviewedPatchesListener = null;
+        }
+
+        if (missedEventsPlaybackManager != null) {
+            missedEventsPlaybackManager.shutdown();
         }
 
         if (gerritConnection != null) {
@@ -500,6 +513,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
                 gerritConnection.setHandler(gerritEventManager);
                 gerritConnection.addListener(gerritConnectionListener);
                 gerritConnection.addListener(projectListUpdater);
+                gerritConnection.addListener(missedEventsPlaybackManager);
                 gerritConnection.start();
             } else {
                 logger.warn("Already started!");
@@ -645,11 +659,11 @@ public class GerritServer implements Describable<GerritServer>, Action {
                         + "gerritAuthKeyFile = {}\n"
                         + "gerritAuthKeyFilePassword = {}",
                         new Object[]{gerritHostName,
-                            gerritSshPort,
-                            gerritProxy,
-                            gerritUserName,
-                            gerritAuthKeyFile,
-                            gerritAuthKeyFilePassword,  });
+                                gerritSshPort,
+                                gerritProxy,
+                                gerritUserName,
+                                gerritAuthKeyFile,
+                                gerritAuthKeyFilePassword,  });
             }
 
             File file = new File(gerritAuthKeyFile);
@@ -731,12 +745,12 @@ public class GerritServer implements Describable<GerritServer>, Action {
 
             int statusCode = execute.getStatusLine().getStatusCode();
             switch(statusCode) {
-                case HttpURLConnection.HTTP_OK:
-                    return FormValidation.ok(Messages.Success());
-                case HttpURLConnection.HTTP_UNAUTHORIZED:
-                    return FormValidation.error(Messages.HttpConnectionUnauthorized());
-                default:
-                    return FormValidation.error(Messages.HttpConnectionError(statusCode));
+            case HttpURLConnection.HTTP_OK:
+                return FormValidation.ok(Messages.Success());
+            case HttpURLConnection.HTTP_UNAUTHORIZED:
+                return FormValidation.error(Messages.HttpConnectionUnauthorized());
+            default:
+                return FormValidation.error(Messages.HttpConnectionError(statusCode));
             }
 
         }
@@ -749,7 +763,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
          * @return list of slaves.
          */
         public ListBoxModel doFillDefaultSlaveIdItems(
-            @QueryParameter("name") @RelativePath("../..") final String serverName) {
+                @QueryParameter("name") @RelativePath("../..") final String serverName) {
             ListBoxModel items = new ListBoxModel();
             logger.trace("filling default gerrit slave drop down for sever {}", serverName);
             GerritServer server = PluginImpl.getInstance().getServer(serverName);
@@ -760,7 +774,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
             }
             ReplicationConfig replicationConfig = server.getConfig().getReplicationConfig();
             if (replicationConfig == null || !replicationConfig.isEnableReplication()
-                || replicationConfig.getGerritSlaves().size() == 0) {
+                    || replicationConfig.getGerritSlaves().size() == 0) {
                 logger.trace(Messages.GerritSlaveNotDefined());
                 items.add(Messages.GerritSlaveNotDefined(), "");
                 return items;
@@ -806,7 +820,7 @@ public class GerritServer implements Describable<GerritServer>, Action {
         return textsById;
     }
 
-   /**
+    /**
      * Saves the form to the configuration and disk.
      * @param req StaplerRequest
      * @param rsp StaplerResponse
