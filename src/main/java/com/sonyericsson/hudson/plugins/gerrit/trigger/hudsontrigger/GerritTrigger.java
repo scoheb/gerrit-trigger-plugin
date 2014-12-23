@@ -151,7 +151,6 @@ public class GerritTrigger extends Trigger<AbstractProject> {
     private String serverName;
     private String gerritSlaveId;
     private List<PluginGerritEvent> triggerOnEvents;
-    private boolean allowTriggeringUnreviewedPatches;
     private boolean dynamicTriggerConfiguration;
     private String triggerConfigURL;
 
@@ -212,8 +211,6 @@ public class GerritTrigger extends Trigger<AbstractProject> {
      * @param gerritSlaveId                  The selected slave associated to this job, if enabled in server configs
      * @param triggerOnEvents                The list of event types to trigger on.
      * @param dynamicTriggerConfiguration    Dynamic trigger configuration on or off
-     * @param allowTriggeringUnreviewedPatches
-     *                                       Is automatic patch checking allowed when connection is established
      * @param triggerConfigURL               Where to fetch the configuration file from
      * @param notificationLevel              Whom to notify.
      */
@@ -248,7 +245,6 @@ public class GerritTrigger extends Trigger<AbstractProject> {
             String gerritSlaveId,
             List<PluginGerritEvent> triggerOnEvents,
             boolean dynamicTriggerConfiguration,
-            boolean allowTriggeringUnreviewedPatches,
             String triggerConfigURL,
             String notificationLevel) {
         this.gerritProjects = gerritProjects;
@@ -283,7 +279,6 @@ public class GerritTrigger extends Trigger<AbstractProject> {
         this.triggerConfigURL = triggerConfigURL;
         this.gerritTriggerTimerTask = null;
         triggerInformationAction = new GerritTriggerInformationAction();
-        this.allowTriggeringUnreviewedPatches = allowTriggeringUnreviewedPatches;
         this.notificationLevel = notificationLevel;
     }
 
@@ -413,18 +408,11 @@ public class GerritTrigger extends Trigger<AbstractProject> {
             gerritTriggerTimerTask = new GerritTriggerTimerTask(this);
         }
 
-        GerritProjectList.removeTriggerFromProjectList(this);
-        if (allowTriggeringUnreviewedPatches) {
-            for (GerritProject p : gerritProjects) {
-                GerritProjectList.addProject(p, this);
-            }
-        }
     }
 
     @Override
     public void stop() {
         logger.debug("Stop");
-        GerritProjectList.removeTriggerFromProjectList(this);
         super.stop();
         try {
             removeListener();
@@ -1138,25 +1126,6 @@ public class GerritTrigger extends Trigger<AbstractProject> {
      */
     public void setDynamicTriggerConfiguration(boolean dynamicTriggerConfiguration) {
         this.dynamicTriggerConfiguration = dynamicTriggerConfiguration;
-    }
-
-    /**
-     * Is checking and triggering missed patches allowed when connection is created.
-     *
-     * @return true if checking and triggering missing patches is allowed.
-     */
-    public boolean isAllowTriggeringUnreviewedPatches() {
-        return allowTriggeringUnreviewedPatches;
-    }
-
-    /**
-     * Set if triggering missing patches configuration should be enabled or not.
-     *
-     * @param allowTriggeringUnreviewedPatches
-     *         true if triggering missing patches configuration should be enabled.
-     */
-    public void setAllowTriggeringUnreviewedPatches(boolean allowTriggeringUnreviewedPatches) {
-        this.allowTriggeringUnreviewedPatches = allowTriggeringUnreviewedPatches;
     }
 
     /**

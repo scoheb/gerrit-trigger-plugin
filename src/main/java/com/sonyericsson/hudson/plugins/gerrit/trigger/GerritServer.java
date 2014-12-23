@@ -105,7 +105,6 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.config.Config;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.ReplicationConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritConnectionListener;
-import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.UnreviewedPatchesListener;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritTrigger;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.GerritSlave;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.version.GerritVersionChecker;
@@ -148,7 +147,6 @@ public class GerritServer implements Describable<GerritServer>, Action {
     private transient GerritHandler gerritEventManager;
     private transient GerritConnection gerritConnection;
     private transient GerritProjectListUpdater projectListUpdater;
-    private transient UnreviewedPatchesListener unreviewedPatchesListener;
     private IGerritHudsonTriggerConfig config;
     private transient GerritConnectionListener gerritConnectionListener;
 
@@ -394,9 +392,6 @@ public class GerritServer implements Describable<GerritServer>, Action {
         projectListUpdater = new GerritProjectListUpdater(name);
         projectListUpdater.start();
 
-        //Starts unreviewed patches listener
-        unreviewedPatchesListener = new UnreviewedPatchesListener(name);
-
         logger.info(name + " started");
         started = true;
     }
@@ -426,11 +421,6 @@ public class GerritServer implements Describable<GerritServer>, Action {
                 logger.error("project list updater of " + name + "interrupted", ie);
             }
             projectListUpdater = null;
-        }
-
-        if (unreviewedPatchesListener != null) {
-            unreviewedPatchesListener.shutdown();
-            unreviewedPatchesListener = null;
         }
 
         if (gerritConnection != null) {
