@@ -836,8 +836,20 @@ public class GerritTrigger extends Trigger<Job> {
                     }
                 } else if (event instanceof RefUpdated) {
                     RefUpdated refUpdated = (RefUpdated)event;
+                    // We need to take into consideration whether
+                    // the event contains the long or short name for Ref
+                    // Gerrit 2.12 will no longer have short branch names in the
+                    // RefUpdated event.
+                    String refNameFromEvent = refUpdated.getRefUpdate().getRefName();
+                    if (!p.getPattern().startsWith("refs/") && p.getCompareType().equals(CompareType.PLAIN)
+                            && refNameFromEvent.startsWith("refs/")) {
+                        refNameFromEvent = refNameFromEvent.substring("refs/heads/".length());
+                        logger.trace("Normalizing event ref name to be in short-form ({} -> {})",
+                                refUpdated.getRefUpdate().getRefName(),
+                                refNameFromEvent);
+                    }
                     if (isServerInteresting(event) && p.isInteresting(refUpdated.getRefUpdate().getProject(),
-                                                                      refUpdated.getRefUpdate().getRefName(), null)) {
+                                                                      refNameFromEvent, null)) {
                         logger.trace("According to {} the event is interesting.", p);
                         return true;
                     }
