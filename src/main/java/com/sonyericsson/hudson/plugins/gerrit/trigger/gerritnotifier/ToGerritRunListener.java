@@ -36,7 +36,6 @@ import hudson.ExtensionList;
 import hudson.FilePath;
 import hudson.model.AbstractBuild;
 import hudson.model.Cause;
-import hudson.model.CauseAction;
 import hudson.model.Job;
 import hudson.model.Result;
 import hudson.model.Run;
@@ -88,10 +87,10 @@ public final class ToGerritRunListener extends RunListener<Run> {
 
     @Override
     public synchronized void onCompleted(@Nonnull Run r, @Nonnull TaskListener listener) {
-        GerritCause cause = getCause(r);
+        GerritCause cause = GerritCause.getCause(r);
         logger.debug("Completed. Build: {} Cause: {}", r, cause);
         if (cause != null) {
-            cleanUpGerritCauses(cause, r);
+            GerritCause.cleanUpGerritCauses(cause, r);
             GerritTriggeredEvent event = cause.getEvent();
             GerritTrigger trigger = GerritTrigger.getTrigger(r.getParent());
             if (trigger != null) {
@@ -175,10 +174,10 @@ public final class ToGerritRunListener extends RunListener<Run> {
 
     @Override
     public synchronized void onStarted(Run r, TaskListener listener) {
-        GerritCause cause = getCause(r);
+        GerritCause cause = GerritCause.getCause(r);
         logger.debug("Started. Build: {} Cause: {}", r, cause);
         if (cause != null) {
-            cleanUpGerritCauses(cause, r);
+            GerritCause.cleanUpGerritCauses(cause, r);
             setThisBuild(r);
             if (cause.getEvent() != null) {
                 if (cause.getEvent() instanceof GerritEventLifecycle) {
@@ -233,25 +232,6 @@ public final class ToGerritRunListener extends RunListener<Run> {
         for (Cause cause : causes) {
             if (cause instanceof GerritCause) {
                 ((GerritCause)cause).getContext().setThisBuild(r);
-            }
-        }
-    }
-
-    /**
-     * Workaround for builds that are triggered by the same Gerrit cause but multiple times in the same quiet period.
-     *
-     * @param firstFound the cause first returned by {@link Run#getCause(Class)}.
-     * @param build      the build to clean up.
-     */
-    protected void cleanUpGerritCauses(GerritCause firstFound, Run build) {
-        List<Cause> causes = build.getAction(CauseAction.class).getCauses();
-        int pos = causes.indexOf(firstFound) + 1;
-        while (pos < causes.size()) {
-            Cause c = causes.get(pos);
-            if (c.equals(firstFound)) {
-                causes.remove(pos);
-            } else {
-                pos++;
             }
         }
     }
@@ -344,16 +324,6 @@ public final class ToGerritRunListener extends RunListener<Run> {
         } else {
             return memory.isTriggered(event, project);
         }
-    }
-
-    /**
-     * Finds the GerritCause for a build if there is one.
-     *
-     * @param build the build to look in.
-     * @return the GerritCause or null if there is none.
-     */
-    private GerritCause getCause(Run build) {
-        return (GerritCause)build.getCause(GerritCause.class);
     }
 
     /**

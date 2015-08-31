@@ -3,7 +3,7 @@
     <parent>
         <groupId>org.jenkins-ci.plugins</groupId>
         <artifactId>plugin</artifactId>
-        <version>1.580.1</version>
+        <version>1.609.2</version>
     </parent>
 
     <groupId>com.sonyericsson.hudson.plugins.gerrit</groupId>
@@ -98,7 +98,7 @@
         <dependency>
             <groupId>org.jenkins-ci.plugins.workflow</groupId>
             <artifactId>workflow-aggregator</artifactId>
-            <version>1.4</version>
+            <version>1.10</version>
             <scope>test</scope>
         </dependency>
         <dependency>

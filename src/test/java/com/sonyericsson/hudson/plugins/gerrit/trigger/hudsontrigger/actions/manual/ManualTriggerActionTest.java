@@ -25,20 +25,26 @@
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.manual;
 
 import static org.mockito.Mockito.any;
+
 import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
+import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.GerritApprovals;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.mock.Setup;
+
 import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.reflect.Whitebox;
+
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+
 
 //CS IGNORE LineLength FOR NEXT 1 LINES. REASON: static import
 import static com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.actions.manual.ManualTriggerAction.ID_SEPARATOR;
@@ -87,9 +93,7 @@ public class ManualTriggerActionTest {
 
         json.put("currentPatchSet", currentPatchSet);
 
-        ManualTriggerAction action = new ManualTriggerAction();
-
-        ManualTriggerAction.HighLow highLow = action.getCodeReview(json);
+        GerritApprovals.HighLow highLow = GerritApprovals.getCodeReview(json);
 
         assertEquals(2, highLow.getHigh());
         assertEquals(-1, highLow.getLow());
@@ -104,9 +108,7 @@ public class ManualTriggerActionTest {
     public void testGetCodeReviewNoPatchSet() throws Exception {
         JSONObject json = new JSONObject();
 
-        ManualTriggerAction action = new ManualTriggerAction();
-
-        ManualTriggerAction.HighLow highLow = action.getCodeReview(json);
+        GerritApprovals.HighLow highLow = GerritApprovals.getCodeReview(json);
 
         assertEquals(0, highLow.getHigh());
         assertEquals(0, highLow.getLow());
@@ -143,9 +145,7 @@ public class ManualTriggerActionTest {
 
         json.put("currentPatchSet", currentPatchSet);
 
-        ManualTriggerAction action = new ManualTriggerAction();
-
-        ManualTriggerAction.HighLow highLow = action.getVerified(json);
+        GerritApprovals.HighLow highLow = GerritApprovals.getVerified(json);
 
         assertEquals(2, highLow.getHigh());
         assertEquals(-1, highLow.getLow());
@@ -160,9 +160,7 @@ public class ManualTriggerActionTest {
     public void testGetVerifiedNoPatchSet() throws Exception {
         JSONObject json = new JSONObject();
 
-        ManualTriggerAction action = new ManualTriggerAction();
-
-        ManualTriggerAction.HighLow highLow = action.getVerified(json);
+        GerritApprovals.HighLow highLow = GerritApprovals.getVerified(json);
 
         assertEquals(0, highLow.getHigh());
         assertEquals(0, highLow.getLow());

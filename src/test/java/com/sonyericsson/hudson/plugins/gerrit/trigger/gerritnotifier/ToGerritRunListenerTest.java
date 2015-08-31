@@ -413,7 +413,7 @@ public class ToGerritRunListenerTest {
 
         ToGerritRunListener toGerritRunListener = new ToGerritRunListener();
 
-        toGerritRunListener.cleanUpGerritCauses(cause, build);
+        GerritCause.cleanUpGerritCauses(cause, build);
 
         assertEquals(1, causes.size());
     }
@@ -440,7 +440,7 @@ public class ToGerritRunListenerTest {
 
         ToGerritRunListener toGerritRunListener = new ToGerritRunListener();
 
-        toGerritRunListener.cleanUpGerritCauses(cause, build);
+        GerritCause.cleanUpGerritCauses(cause, build);
 
         assertEquals(1, causes.size());
     }
@@ -467,7 +467,7 @@ public class ToGerritRunListenerTest {
 
         ToGerritRunListener toGerritRunListener = new ToGerritRunListener();
 
-        toGerritRunListener.cleanUpGerritCauses(cause, build);
+        GerritCause.cleanUpGerritCauses(cause, build);
 
         assertEquals(1, causes.size());
     }
@@ -497,7 +497,7 @@ public class ToGerritRunListenerTest {
 
         ToGerritRunListener toGerritRunListener = new ToGerritRunListener();
 
-        toGerritRunListener.cleanUpGerritCauses(cause, build);
+        GerritCause.cleanUpGerritCauses(cause, build);
 
         assertEquals(2, causes.size());
     }

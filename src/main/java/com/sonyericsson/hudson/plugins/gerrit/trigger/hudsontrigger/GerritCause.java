@@ -24,6 +24,8 @@
  */
 package com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger;
 
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +36,10 @@ import com.sonyericsson.hudson.plugins.gerrit.trigger.GerritServer;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.PluginImpl;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.config.IGerritHudsonTriggerConfig;
 import com.sonyericsson.hudson.plugins.gerrit.trigger.hudsontrigger.data.TriggerContext;
+
+import hudson.model.Cause;
+import hudson.model.CauseAction;
+import hudson.model.Run;
 import hudson.triggers.SCMTrigger.SCMTriggerCause;
 
 /**
@@ -253,4 +259,34 @@ public class GerritCause extends SCMTriggerCause {
         }
         return this;
     }
+
+    /**
+     * Finds the GerritCause for a build if there is one.
+     *
+     * @param build the build to look in.
+     * @return the GerritCause or null if there is none.
+     */
+    public static GerritCause getCause(Run build) {
+        return (GerritCause)build.getCause(GerritCause.class);
+    }
+
+    /**
+     * Workaround for builds that are triggered by the same Gerrit cause but multiple times in the same quiet period.
+     *
+     * @param firstFound the cause first returned by {@link Run#getCause(Class)}.
+     * @param build      the build to clean up.
+     */
+    public static void cleanUpGerritCauses(GerritCause firstFound, Run build) {
+        List<Cause> causes = build.getAction(CauseAction.class).getCauses();
+        int pos = causes.indexOf(firstFound) + 1;
+        while (pos < causes.size()) {
+            Cause c = causes.get(pos);
+            if (c.equals(firstFound)) {
+                causes.remove(pos);
+            } else {
+                pos++;
+            }
+        }
+    }
+
 }
